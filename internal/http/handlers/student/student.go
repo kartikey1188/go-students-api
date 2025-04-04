@@ -7,14 +7,13 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"strconv"
 
+	"github.com/kartikey1188/go-students-api/internal/storage"
 	"github.com/kartikey1188/go-students-api/internal/types"
-	"github.com/kartikey1188/go-students-api/internal/utils/getters"
 	"github.com/kartikey1188/go-students-api/internal/utils/response"
 )
 
-func New() http.HandlerFunc {
+func New(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("creating a student")
 
@@ -46,7 +45,19 @@ func New() http.HandlerFunc {
 			return
 		}
 
-		ageisthis := getters.GetAge(student)
-		response.WriteJson(w, http.StatusCreated, map[string]string{"success": "OK", "age": strconv.Itoa(ageisthis)})
+		lastId, err := storage.CreateStudent(
+			student.Name,
+			student.Email,
+			*student.Age,
+		)
+
+		slog.Info("student created created successfully", slog.String("userID", fmt.Sprint(lastId)))
+
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
+			return
+		}
+
+		response.WriteJson(w, http.StatusCreated, map[string]int64{"ID": lastId})
 	}
 }
