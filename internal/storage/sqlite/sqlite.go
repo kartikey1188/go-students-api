@@ -2,6 +2,9 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
+
+	"github.com/kartikey1188/go-students-api/internal/types"
 
 	"github.com/kartikey1188/go-students-api/internal/config"
 	_ "github.com/mattn/go-sqlite3" // this import for sqlite3 is required for the driver to register itself with the database/sql package, and the underscore indicates that we don't need to use it directly in our code; but we still need it to be included in the build
@@ -54,4 +57,25 @@ func (s *Sqlite) CreateStudent(name string, email string, age int) (int64, error
 	}
 
 	return lastId, nil
+}
+
+func (s *Sqlite) GetStudent(id int64) (types.Student, error) {
+	stmt, err := s.Db.Prepare("SELECT id, name, email, age FROM students WHERE id = ? LIMIT 1")
+	if err != nil {
+		return types.Student{}, err
+	}
+
+	defer stmt.Close()
+
+	var student types.Student
+
+	err = stmt.QueryRow(id).Scan(&student.Id, &student.Name, &student.Email, &student.Age)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return types.Student{}, fmt.Errorf("no student foundm with id %s", fmt.Sprint(id))
+		}
+		return types.Student{}, fmt.Errorf("query error: %w", err)
+	}
+
+	return student, nil
 }
