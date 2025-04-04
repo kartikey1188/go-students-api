@@ -7,8 +7,10 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/kartikey1188/go-students-api/internal/types"
+	"github.com/kartikey1188/go-students-api/internal/utils/getters"
 	"github.com/kartikey1188/go-students-api/internal/utils/response"
 )
 
@@ -29,8 +31,22 @@ func New() http.HandlerFunc {
 			return
 		}
 
-		// request validation
+		// validator := validator.New()
+		// if err := validator.Struct(student); err != nil {
 
-		response.WriteJson(w, http.StatusCreated, map[string]string{"success": "OK"})
+		// 	validatateErrs := err.(validator.ValidationErrors)
+		// 	response.WriteJson(w, http.StatusBadRequest, response.ValidationError(validatateErrs))
+		// 	return
+		// }
+
+		//request validation
+
+		if validation := response.MissingFields(student); validation != "" {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("%s", validation)))
+			return
+		}
+
+		ageisthis := getters.GetAge(student)
+		response.WriteJson(w, http.StatusCreated, map[string]string{"success": "OK", "age": strconv.Itoa(ageisthis)})
 	}
 }
