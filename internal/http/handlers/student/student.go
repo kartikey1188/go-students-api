@@ -31,16 +31,6 @@ func New(storage storage.Storage) http.HandlerFunc {
 			return
 		}
 
-		// validator := validator.New()
-		// if err := validator.Struct(student); err != nil {
-
-		// 	validatateErrs := err.(validator.ValidationErrors)
-		// 	response.WriteJson(w, http.StatusBadRequest, response.ValidationError(validatateErrs))
-		// 	return
-		// }
-
-		//request validation
-
 		if validation := response.MissingFields(student); validation != "" {
 			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("%s", validation)))
 			return
@@ -52,12 +42,12 @@ func New(storage storage.Storage) http.HandlerFunc {
 			*student.Age,
 		)
 
-		slog.Info("student created created successfully", slog.String("userID", fmt.Sprint(lastId)))
-
 		if err != nil {
 			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(err))
 			return
 		}
+
+		slog.Info("student created created successfully", slog.String("userID", fmt.Sprint(lastId)))
 
 		response.WriteJson(w, http.StatusCreated, map[string]int64{"ID": lastId})
 	}
